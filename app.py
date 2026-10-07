@@ -5,10 +5,9 @@ Buka:      http://127.0.0.1:5000        (beli tiket)
            http://127.0.0.1:5000/gate   (pintu masuk / scan)
            http://127.0.0.1:5000/admin  (khusus demo: lihat kunci RSA)
 """
-import base64
 import json
 import os
-import uuid
+import secrets
 
 from flask import Flask, request, render_template_string
 
@@ -16,7 +15,24 @@ import rsa
 
 app = Flask(__name__)
 KEY_FILE = "keys.json"
-used_tickets = set()  # tiket yang sudah masuk (anti dipakai 2x)
+TICKET_FILE = "tickets.json"
+ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # tanpa O/0/I/1 biar tidak membingungkan
+
+
+def load_tickets():
+    if os.path.exists(TICKET_FILE):
+        with open(TICKET_FILE) as f:
+            return json.load(f)
+    return {}
+
+
+def save_tickets():
+    with open(TICKET_FILE, "w") as f:
+        json.dump(tickets, f)
+
+
+# { "7K3M9QXA": {"payload": "...", "sig": "hex...", "used": False} }
+tickets = load_tickets()
 
 
 # ---------- Kunci RSA panitia (dibuat sekali, disimpan ke file) ----------
@@ -36,25 +52,27 @@ N, E, D = load_keys()
 
 # ---------- Buat & cek tiket ----------
 def create_ticket(nama, event, kategori):
-    payload = f"{uuid.uuid4().hex[:10]}|{nama}|{event}|{kategori}"
+    tid = "".join(secrets.choice(ALPHABET) for _ in range(8))
+    payload = f"{tid}|{nama}|{event}|{kategori}"
     signature = rsa.sign(payload, D, N)  # private key panitia
-    token = base64.urlsafe_b64encode(payload.encode()).decode() + "." + hex(signature)[2:]
-    return token
+    tickets[tid] = {"payload": payload, "sig": hex(signature)[2:], "used": False}
+    save_tickets()
+    return f"TKT-{tid[:4]}-{tid[4:]}"  # kode pendek untuk user
 
 
-def check_ticket(token):
-    try:
-        b64, sig_hex = token.strip().split(".")
-        payload = base64.urlsafe_b64decode(b64.encode()).decode()
-        signature = int(sig_hex, 16)
-    except Exception:
-        return False, "Tiket tidak valid", None
-    if not rsa.verify(payload, signature, E, N):  # public key
-        return False, "Tiket PALSU / sudah diubah", None
-    tid, nama, event, kategori = payload.split("|")
-    if tid in used_tickets:
+def check_ticket(code):
+    tid = code.upper().replace("TKT", "").replace("-", "").replace(" ", "")
+    rec = tickets.get(tid)
+    if not rec:
+        return False, "Tiket tidak ditemukan", None
+    payload = rec["payload"]
+    if not rsa.verify(payload, int(rec["sig"], 16), E, N):  # public key
+        return False, "Data tiket tidak valid / sudah diubah", None
+    if rec["used"]:
         return False, "Tiket sudah pernah dipakai", None
-    used_tickets.add(tid)
+    rec["used"] = True
+    save_tickets()
+    _, nama, event, kategori = payload.split("|")
     return True, "Tiket valid, silakan masuk", {"nama": nama, "event": event, "kategori": kategori}
 
 
@@ -89,14 +107,14 @@ def beli():
         token = create_ticket(request.form["nama"], request.form["event"], request.form["kategori"])
         body = f"""<h2>✅ Pembelian berhasil</h2>
         <p>Tunjukkan kode tiket ini di pintu masuk:</p>
-        <textarea rows="6" readonly>{token}</textarea>"""
+        <h1 style="text-align:center;letter-spacing:2px;color:#6c3ef4">{token}</h1>"""
     return render_template_string(PAGE, body=body)
 
 
 @app.route("/gate", methods=["GET", "POST"])
 def gate():
     body = """<h2>🚪 Pintu Masuk</h2>
-    <form method="post"><textarea name="token" rows="5" placeholder="Tempel kode tiket (hasil scan)" required></textarea>
+    <form method="post"><input name="token" placeholder="Masukkan kode tiket, contoh: TKT-7K3M-9QXA" required>
     <button>Verifikasi</button></form>"""
     if request.method == "POST":
         ok, msg, info = check_ticket(request.form["token"])
