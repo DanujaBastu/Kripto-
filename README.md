@@ -1,4 +1,4 @@
-# LAPORAN TUGAS KRIPTOGRAFI: IMPLEMENTASI ALGORITMA RSA
+﻿# LAPORAN TUGAS KRIPTOGRAFI: IMPLEMENTASI ALGORITMA RSA
 ## STUDI KASUS: APLIKASI TIKET KONSER ANTI-CALO (DIGITAL SIGNATURE)
 
 ---
@@ -28,7 +28,7 @@ Sesuai dengan instruksi penugasan untuk membuat sebuah studi kasus (*Study Case*
 ### 1.2 Tujuan Tugas
 Tujuan dari pelaksanaan tugas dan pembuatan aplikasi studi kasus ini adalah:
 1. Mengimplementasikan algoritma RSA murni dari nol dalam sebuah Studi Kasus dunia nyata, yaitu penerapan Tanda Tangan Digital (Digital Signature) pada penerbitan tiket elektronik konser (E-Ticket) guna mencegah pemalsuan oleh calo.
-2. Membuktikan kebenaran matematis dari algoritma RSA melalui perhitungan aritmatika modular, fungsi totient Euler, identitas Bézout, dan Teorema Euler yang beroperasi dalam mode autentikasi (Enkripsi dengan *Private Key*, Dekripsi dengan *Public Key*).
+2. Membuktikan kebenaran matematis dari algoritma RSA melalui perhitungan aritmatika modular, fungsi totient Euler, identitas BÃ©zout, dan Teorema Euler yang beroperasi dalam mode autentikasi (Enkripsi dengan *Private Key*, Dekripsi dengan *Public Key*).
 3. Menyediakan antarmuka pengguna (UI) yang mensimulasikan arsitektur terdistribusi: Sisi Admin Panitia (Pembuat Kunci & Penandatangan Tiket), Media Distribusi (QR Code/Teks), dan Sisi Scanner *Gate* (Verifikasi Tiket).
 4. Menunjukkan keunggulan RSA dalam menjamin integritas dan autentikasi data, di mana tiket yang isinya dimanipulasi sekecil apapun akan langsung gagal diverifikasi oleh sistem pembaca di pintu masuk.
 
@@ -46,10 +46,10 @@ Pembagi Bersama Terbesar (*Greatest Common Divisor* / GCD) dari dua bilangan bul
 $$\text{gcd}(a, b) = \text{gcd}(b, a \pmod b)$$
 Iterasi berhenti saat sisa bagi bernilai 0, dan pembagi terakhir merupakan nilai $\text{PBB}(a, b)$.
 
-### 2.3 Relatif Prima & Identitas Bézout
+### 2.3 Relatif Prima & Identitas BÃ©zout
 Dua bilangan bulat $a$ dan $b$ dikatakan relatif prima (koprima) jika dan hanya jika:
 $$\text{PBB}(a, b) = 1$$
-Berdasarkan identitas Bézout, jika $\text{PBB}(a, b) = 1$, maka terdapat bilangan bulat $x$ dan $y$ sedemikian sehingga:
+Berdasarkan identitas BÃ©zout, jika $\text{PBB}(a, b) = 1$, maka terdapat bilangan bulat $x$ dan $y$ sedemikian sehingga:
 $$a \cdot x + b \cdot y = 1$$
 
 ### 2.4 Fungsi Totient Euler ($\phi(n)$)
@@ -80,12 +80,12 @@ Aplikasi dirancang menggunakan teknologi **Python Flask** sebagai *backend* web 
 ### 3.1 Struktur Direktori Proyek
 ```text
 Kripto-/
-├── app.py          # Web app Flask (Routing web, rendering UI Tailwind, endpoint gate/admin)
-├── rsa.py          # Implementasi inti matematika RSA murni (Tanpa Library eksternal)
-├── keys.json       # Penyimpanan sepasang kunci RSA (Public & Private Key)
-├── tickets.json    # Database penyimpanan payload tiket dan Tanda Tangan Digital (Signature)
-├── static/         # Direktori aset statis (contoh: foto konser)
-└── README.md       # Laporan dan petunjuk instalasi
+â”œâ”€â”€ app.py          # Web app Flask (Routing web, rendering UI Tailwind, endpoint gate/admin)
+â”œâ”€â”€ rsa.py          # Implementasi inti matematika RSA murni (Tanpa Library eksternal)
+â”œâ”€â”€ keys.json       # Penyimpanan sepasang kunci RSA (Public & Private Key)
+â”œâ”€â”€ tickets.json    # Database penyimpanan payload tiket dan Tanda Tangan Digital (Signature)
+â”œâ”€â”€ static/         # Direktori aset statis (contoh: foto konser)
+â””â”€â”€ README.md       # Laporan dan petunjuk instalasi
 ```
 
 ### 3.2 Fungsi-Fungsi Inti Matematika (`rsa.py`)
@@ -114,48 +114,46 @@ Berikut adalah implementasi fungsi kunci tanpa library yang ditulis secara manua
 
 ## BAB IV: HASIL PENGUJIAN DAN ANALISIS
 
-### 4.1 Uji Kasus 1: Sesuai Slide Perkuliahan (Kasus Alice & Pesan "HELLOALICE")
+Karena aplikasi ini berfokus pada **Tanda Tangan Digital (Digital Signature) untuk E-Ticket**, maka pengujian algoritma difokuskan pada kecocokan fungsi *Sign* dan *Verify* terhadap nilai *Hash* dari data tiket. 
+
+### 4.1 Uji Kasus: Penandatanganan Tiket dengan Kunci Kecil
+Untuk keperluan demonstrasi perhitungan manual, berikut adalah pengujian menggunakan bilangan prima berukuran kecil:
+
 * **Parameter Kunci:**
-  - $p = 47$ (Prima)
-  - $q = 71$ (Prima)
-  - $n = 47 \times 71 = 3337$
-  - $\phi(n) = (47 - 1) \times (71 - 1) = 46 \times 70 = 3220$
-  - Dipilih $e = 79$ ($\text{PBB}(79, 3220) = 1$)
-  - Invers modular: Untuk $k = 25$, diperoleh $d = \frac{1 + 25 \times 3220}{79} = \frac{80501}{79} = 1019$.
-  - Kunci Publik: $(e=79, n=3337)$
-  - Kunci Privat: $(d=1019, n=3337)$
+  - $p = 61$ (Prima)
+  - $q = 53$ (Prima)
+  - Modulus $n = 61 \times 53 = 3233$
+  - Totient $\phi(n) = (61 - 1) \times (53 - 1) = 60 \times 52 = 3120$
+  - Dipilih Kunci Publik $e = 17$ (karena $\text{PBB}(17, 3120) = 1$)
+  - Kunci Privat $d$ dihitung sehingga $17 \times d \equiv 1 \pmod{3120}$. Didapat $d = 2753$.
+  - Kunci Publik: $(e=17, n=3233)$
+  - Kunci Privat: $(d=2753, n=3233)$
 
-* **Proses Enkripsi:**
-  - Plainteks $m = \text{"HELLOALICE"}$
-  - Kode huruf 2 digit:
-    $H=07, E=04, L=11, L=11, O=14, A=00, L=11, I=08, C=02, E=04$
-    $\rightarrow m = 07041111140011080204$
-  - Pemecahan blok 4 digit:
-    $m_1 = 0704, m_2 = 1111, m_3 = 1400, m_4 = 1108, m_5 = 0204$
-  - Perhitungan per blok:
-    - $c_1 = 704^{79} \pmod{3337} = 328 \rightarrow 0328$
-    - $c_2 = 1111^{79} \pmod{3337} = 301 \rightarrow 0301$
-    - $c_3 = 1400^{79} \pmod{3337} = 2653$
-    - $c_4 = 1108^{79} \pmod{3337} = 2986$
-    - $c_5 = 204^{79} \pmod{3337} = 1164$
-  - **Cipherteks Dihasilkan:** `0328 0301 2653 2986 1164` (Sesuai 100% dengan slide).
+* **Proses Penandatanganan (Sign) di Sisi Server:**
+  - Misalkan pengunjung bernama Budi memesan tiket VIP.
+  - Sistem membuat data tiket: `TKT-1234|Budi|Konser|VIP`.
+  - Data di-hash menggunakan SHA-256. Untuk contoh perhitungan manual, asumsikan nilai Hash tersebut direpresentasikan sebagai bilangan $h = 65$.
+  - Tiket ditandatangani menggunakan kunci privat ($d$):
+    $$ \text{Signature} (s) = h^d \pmod n $$
+    $$ s = 65^{2753} \pmod{3233} = 588 $$
+  - Angka `588` ini disimpan di pangkalan data (`tickets.json`) sebagai Tanda Tangan Digital milik Budi.
 
-* **Proses Dekripsi:**
-  - $m_1 = 328^{1019} \pmod{3337} = 704 \rightarrow 0704 \rightarrow \text{"HE"}$
-  - $m_2 = 301^{1019} \pmod{3337} = 1111 \rightarrow \text{"LL"}$
-  - $m_3 = 2653^{1019} \pmod{3337} = 1400 \rightarrow \text{"OA"}$
-  - $m_4 = 2986^{1019} \pmod{3337} = 1108 \rightarrow \text{"LI"}$
-  - $m_5 = 1164^{1019} \pmod{3337} = 204 \rightarrow 0204 \rightarrow \text{"CE"}$
-  - **Plainteks Hasil Rekonstruksi:** $\text{"HELLOALICE"}$ (**COCOK SEMPURNA / MATCH VERIFIED**).
+* **Proses Verifikasi (Verify) di Pintu Masuk:**
+  - Saat Budi datang, petugas mengecek data tiket Budi.
+  - Sistem menghash ulang data Budi dan menghasilkan $h_{baru} = 65$.
+  - Sistem mengambil signature `588` dari database dan mendekripsinya dengan kunci publik ($e$):
+    $$ h_{asli} = s^e \pmod n $$
+    $$ h_{asli} = 588^{17} \pmod{3233} = 65 $$
+  - **Hasil Analisis:** Karena $h_{asli} (65)$ bernilai **SAMA** dengan $h_{baru} (65)$, maka tiket dinyatakan **VALID**.
 
-### 4.2 Uji Kasus 2: Sesuai Slide Perkuliahan (Kasus Bob)
-* $p = 83, q = 61 \Rightarrow n = 5063, \phi(n) = 82 \times 60 = 4920$.
-* Kunci publik $e = 187$ ($\text{PBB}(187, 4920) = 1$).
-* Kunci privat $d = 763$.
-* Hasil pengujian program: Nilai yang dihasilkan identik dengan contoh di slide kuliah.
+### 4.2 Uji Kasus: Simulasi Manipulasi Data (Calo Tiket)
+* Misalkan seorang calo memanipulasi *database* atau memalsukan *payload* dengan mengubah kata "Regular" menjadi "VIP".
+* Perubahan 1 huruf ini membuat nilai Hash berubah drastis (misalnya menjadi $h_{palsu} = 66$).
+* Saat diverifikasi di pintu masuk, $h_{asli}$ dari signature tetaplah `65`.
+* **Hasil Analisis:** Karena $66 \neq 65$, sistem dengan tegas akan menolak tiket tersebut (*Digital Signature Invalid*).
 
 ### 4.3 Analisis Aspek Keamanan
-Pada contoh praktikum, bilangan prima $p$ dan $q$ yang digunakan berukuran relatif kecil (2 digit hingga 3 digit) untuk kemudahan demonstrasi perhitungan manual. Namun dalam implementasi nyata standar industri (misal RSA-2048 atau RSA-4096), ukuran bilangan prima mencapai ratusan hingga ribuan bit sehingga faktorisasi nilai $n$ mustahil dilakukan dalam waktu wajar dengan daya komputasi saat ini.
+Pada uji kasus di atas, bilangan prima $p$ dan $q$ yang digunakan berukuran sangat kecil (2 digit). Namun pada implementasi asli aplikasi **TiketKu** yang dibangun, sistem membangkitkan bilangan prima acak sebesar **512-bit** secara otomatis (sehingga $n$ bernilai **1024-bit**). Dengan ukuran sebesar itu, faktorisasi nilai $n$ untuk mencari kunci privat $d$ mustahil dilakukan oleh peretas dalam waktu wajar dengan daya komputasi saat ini, sehingga tiket tidak bisa dipalsukan.
 
 ---
 
@@ -175,7 +173,7 @@ Pada contoh praktikum, bilangan prima $p$ dan $q$ yang digunakan berukuran relat
 4. Slide Kuliah: *Kriptografi Part 5 - Asymmetric-key Cryptography: RSA*. Departemen Teknologi Informasi, Institut Teknologi Sepuluh Nopember.
 
 
-# 🎫 TiketKu - Aplikasi Tiket Konser Anti-Calo
+# ≡ƒÄ½ TiketKu - Aplikasi Tiket Konser Anti-Calo
 
 Aplikasi web sederhana untuk penjualan tiket konser/event. Setiap tiket
 ditandatangani secara digital menggunakan **RSA yang diimplementasikan manual**
@@ -225,27 +223,27 @@ Program membuat bilangan acak 512-bit lalu mengujinya dengan **tes Miller-Rabin*
 **Langkah 2 - Hitung modulus `n`.**
 
 ```
-n = p × q
+n = p ├ù q
 ```
 
 `n` adalah bagian dari public key maupun private key. Dengan p dan q masing-masing
 512-bit, `n` berukuran 1024-bit.
 
-**Langkah 3 - Hitung `φ(n)` (Euler's totient).**
+**Langkah 3 - Hitung `╧å(n)` (Euler's totient).**
 
 ```
-φ(n) = (p − 1) × (q − 1)
+╧å(n) = (p ΓêÆ 1) ├ù (q ΓêÆ 1)
 ```
 
 **Langkah 4 - Pilih eksponen publik `e`.**
-Program memakai `e = 65537`, lalu memastikan `gcd(e, φ(n)) = 1` (fungsi `gcd`).
+Program memakai `e = 65537`, lalu memastikan `gcd(e, ╧å(n)) = 1` (fungsi `gcd`).
 Jika tidak, `p` dan `q` dibuat ulang.
 
 **Langkah 5 - Hitung eksponen privat `d`.**
-`d` adalah invers modular dari `e` terhadap `φ(n)`:
+`d` adalah invers modular dari `e` terhadap `╧å(n)`:
 
 ```
-d × e ≡ 1 (mod φ(n))
+d ├ù e Γëí 1 (mod ╧å(n))
 ```
 
 Dihitung dengan **Extended Euclidean Algorithm** (`egcd` dan `mod_inverse`).
@@ -254,7 +252,7 @@ Dihitung dengan **Extended Euclidean Algorithm** (`egcd` dan `mod_inverse`).
 
 ```
 Public key  = (e, n)
-Private key = (d, n)     ← p, q, φ(n) dibuang/dirahasiakan
+Private key = (d, n)     ΓåÉ p, q, ╧å(n) dibuang/dirahasiakan
 ```
 
 ### Bagian B - Operasi Inti: Perpangkatan Modular (`mod_pow`)
@@ -280,7 +278,7 @@ payload = "K7M3Q9XA|Budi|Konser Nusantara 2026|VIP"
 **Langkah 2 - Hash data tiket dengan SHA-256.**
 
 ```
-h = SHA256(payload)      → bilangan 256-bit
+h = SHA256(payload)      ΓåÆ bilangan 256-bit
 ```
 
 Hash membuat data berapa pun panjangnya menjadi bilangan kecil yang pasti
@@ -316,8 +314,8 @@ h_asli = signature ^ e mod n
 **Langkah 4 - Bandingkan.**
 
 ```
-h_asli == h_baru  →  tiket valid
-h_asli != h_baru  →  data diubah / tanda tangan palsu, tiket ditolak
+h_asli == h_baru  ΓåÆ  tiket valid
+h_asli != h_baru  ΓåÆ  data diubah / tanda tangan palsu, tiket ditolak
 ```
 
 Jika seseorang mengubah `VIP` menjadi `Regular` (atau sebaliknya) di `tickets.json`,
@@ -326,10 +324,10 @@ Orang tersebut juga tidak bisa membuat tanda tangan baru karena tidak punya `d`.
 
 ### Mengapa Cara Ini Berhasil (Bukti Singkat)
 
-Karena `d × e ≡ 1 (mod φ(n))`, maka:
+Karena `d ├ù e Γëí 1 (mod ╧å(n))`, maka:
 
 ```
-(h ^ d) ^ e mod n  =  h ^ (d×e) mod n  =  h
+(h ^ d) ^ e mod n  =  h ^ (d├ùe) mod n  =  h
 ```
 
 Artinya apa yang "dikunci" dengan `d` bisa "dibuka" dengan `e`, dan sebaliknya.
@@ -341,19 +339,19 @@ Kunci kecil agar mudah dihitung manual (aplikasi asli memakai 1024-bit):
 | Langkah | Perhitungan | Hasil |
 |---|---|---|
 | Pilih prima | p = 61, q = 53 | |
-| Hitung n | 61 × 53 | **n = 3233** |
-| Hitung φ(n) | 60 × 52 | **φ(n) = 3120** |
+| Hitung n | 61 ├ù 53 | **n = 3233** |
+| Hitung ╧å(n) | 60 ├ù 52 | **╧å(n) = 3120** |
 | Pilih e | gcd(17, 3120) = 1 | **e = 17** |
-| Hitung d | 17 × d ≡ 1 (mod 3120) | **d = 2753** (cek: 17 × 2753 = 46801 = 15 × 3120 + 1) |
+| Hitung d | 17 ├ù d Γëí 1 (mod 3120) | **d = 2753** (cek: 17 ├ù 2753 = 46801 = 15 ├ù 3120 + 1) |
 
 Misalkan hash data tiket bernilai `h = 65`:
 
 ```
 Sign    : signature = 65 ^ 2753 mod 3233 = 588
-Verify  : 588 ^ 17 mod 3233             = 65   ✔ sama dengan h → VALID
+Verify  : 588 ^ 17 mod 3233             = 65   Γ£ö sama dengan h ΓåÆ VALID
 ```
 
-Kalau data diubah sehingga hash-nya menjadi, misalnya, 66, maka `66 ≠ 65` → **DITOLAK**.
+Kalau data diubah sehingga hash-nya menjadi, misalnya, 66, maka `66 Γëá 65` ΓåÆ **DITOLAK**.
 
 Untuk enkripsi pesan (bukan tanda tangan), arahnya dibalik:
 
@@ -370,11 +368,11 @@ Fungsi `encrypt_int` dan `decrypt_int` di `rsa.py` mengimplementasikan ini untuk
 
 ```
 tiket-antic-calo/
-├── app.py          # Web app Flask (halaman beli tiket, gate, admin)
-├── rsa.py          # Implementasi RSA manual
-├── keys.json       # Kunci RSA, dibuat otomatis saat pertama dijalankan
-├── tickets.json    # Data tiket + tanda tangan, dibuat otomatis
-└── README.md
+Γö£ΓöÇΓöÇ app.py          # Web app Flask (halaman beli tiket, gate, admin)
+Γö£ΓöÇΓöÇ rsa.py          # Implementasi RSA manual
+Γö£ΓöÇΓöÇ keys.json       # Kunci RSA, dibuat otomatis saat pertama dijalankan
+Γö£ΓöÇΓöÇ tickets.json    # Data tiket + tanda tangan, dibuat otomatis
+ΓööΓöÇΓöÇ README.md
 ```
 
 ### Isi `rsa.py`
