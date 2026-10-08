@@ -91,6 +91,10 @@ def create_ticket(nama, event, kategori):
 
 
 def check_ticket(code):
+    # PENTING: Baca ulang dari file setiap kali scan agar editan manual (simulasi hacker) langsung terbaca!
+    global tickets
+    tickets = load_tickets()
+    
     tid = code.upper().replace("TKT", "").replace("-", "").replace(" ", "")
     rec = tickets.get(tid)
     if not rec:
