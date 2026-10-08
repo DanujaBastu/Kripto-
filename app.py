@@ -573,7 +573,7 @@ def gate():
             </div>
 
             <!-- Loading saat menghubungkan ke kamera -->
-            <div id="cameraLoading" class="hidden p-6 text-center text-slate-300 space-y-3">
+            <div id="cameraLoading" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10 text-slate-300 space-y-3">
               <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-violet-500 border-r-transparent"></div>
               <p class="text-xs">Menghubungkan ke kamera...</p>
             </div>
@@ -638,7 +638,9 @@ def gate():
 
         placeholder.classList.add("hidden");
         loading.classList.remove("hidden");
-        reader.classList.add("hidden");
+        // WAJIB TAMPIL agar Html5Qrcode bisa menghitung dimensi width/height, 
+        // kalau hidden nanti error / video jadi 0x0 / ngeblank hitam.
+        reader.classList.remove("hidden"); 
         activeBar.classList.add("hidden");
 
         try {{
