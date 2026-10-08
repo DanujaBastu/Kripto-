@@ -648,26 +648,44 @@ def gate():
           
           const config = {{ fps: 10, qrbox: {{ width: 230, height: 230 }} }};
 
-          await html5QrCode.start(
-            {{ facingMode: "environment" }},
-            config,
-            (decodedText) => {{
-              stopScanner();
-              document.getElementById("autoTokenInput").value = decodedText.trim();
-              document.getElementById("autoScanForm").submit();
-            }},
-            (errorMessage) => {{
-              // memindai frame
+          // Ambil daftar kamera yang tersedia di perangkat (laptop/hp)
+          const devices = await Html5Qrcode.getCameras();
+          if (devices && devices.length > 0) {{
+            // Default pakai kamera pertama (biasanya webcam laptop)
+            let cameraId = devices[0].id;
+            
+            // Jika ada kamera belakang (untuk HP), kita utamakan
+            for (let i = 0; i < devices.length; i++) {{
+              let label = devices[i].label.toLowerCase();
+              if (label.includes("back") || label.includes("belakang") || label.includes("environment")) {{
+                cameraId = devices[i].id;
+                break;
+              }}
             }}
-          );
 
-          isScanning = true;
-          loading.classList.add("hidden");
-          reader.classList.remove("hidden");
-          activeBar.classList.remove("hidden");
+            await html5QrCode.start(
+              cameraId,
+              config,
+              (decodedText) => {{
+                stopScanner();
+                document.getElementById("autoTokenInput").value = decodedText.trim();
+                document.getElementById("autoScanForm").submit();
+              }},
+              (errorMessage) => {{
+                // Abaikan error per-frame (normal saat belum ada QR yang jelas)
+              }}
+            );
+
+            isScanning = true;
+            loading.classList.add("hidden");
+            reader.classList.remove("hidden");
+            activeBar.classList.remove("hidden");
+          }} else {{
+            throw new Error("Tidak ada kamera yang terdeteksi di perangkat ini.");
+          }}
         }} catch (err) {{
           console.error("Camera Error:", err);
-          alert("Tidak dapat mengakses kamera (" + err + "). Mengalihkan ke mode Input Manual."); switchMode("manual");
+          alert("Gagal membuka kamera: " + err + "\\n\\nPastikan Anda memberikan izin kamera di browser. Mengalihkan ke mode Input Manual."); switchMode("manual");
           loading.classList.add("hidden");
           reader.classList.add("hidden");
           placeholder.classList.remove("hidden");
