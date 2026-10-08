@@ -91,7 +91,6 @@ def create_ticket(nama, event, kategori):
 
 
 def check_ticket(code):
-    # PENTING: Baca ulang dari file setiap kali scan agar editan manual (simulasi hacker) langsung terbaca!
     global tickets
     tickets = load_tickets()
     
@@ -642,8 +641,6 @@ def gate():
 
         placeholder.classList.add("hidden");
         loading.classList.remove("hidden");
-        // WAJIB TAMPIL agar Html5Qrcode bisa menghitung dimensi width/height, 
-        // kalau hidden nanti error / video jadi 0x0 / ngeblank hitam.
         reader.classList.remove("hidden"); 
         activeBar.classList.add("hidden");
 
