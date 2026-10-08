@@ -667,7 +667,7 @@ def gate():
           activeBar.classList.remove("hidden");
         }} catch (err) {{
           console.error("Camera Error:", err);
-          alert("Tidak dapat mengakses kamera: " + err + "\nSilakan gunakan mode Input Manual.");
+          alert("Tidak dapat mengakses kamera (" + err + "). Mengalihkan ke mode Input Manual."); switchMode("manual");
           loading.classList.add("hidden");
           reader.classList.add("hidden");
           placeholder.classList.remove("hidden");
