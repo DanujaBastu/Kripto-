@@ -31,16 +31,9 @@ def mod_inverse(e, phi):
 
 
 def mod_pow(base, exp, mod):
-    """Pangkat Modulo Cepat (Square-and-Multiply bitwise) tanpa integer overflow."""
-    result = 1
-    base %= mod
-    while exp > 0:
-        if exp & 1:
-            result = (result * base) % mod
-        base = (base * base) % mod
-        exp >>= 1
-    return result
-
+    """Pangkat modulo: base^exp mod mod (pakai pow() bawaan Python)."""
+    return pow(base, exp, mod)
+    
 
 # ---------- 2. Bilangan prima & Uji Keprimaan ----------
 def is_prime(n, k=40):
@@ -190,3 +183,32 @@ def encrypt_int(m: int, e: int, n: int) -> int:
 
 def decrypt_int(c: int, d: int, n: int) -> int:
     return mod_pow(c, d, n)
+
+
+# ---------- 7. Enkripsi/Dekripsi Teks (dipakai app.py untuk data tiket) ----------
+def text_to_int(text: str) -> int:
+    """Teks -> bytes UTF-8 -> satu bilangan bulat besar m."""
+    return int.from_bytes(text.encode("utf-8"), "big")
+
+
+def int_to_text(m: int) -> str:
+    """Kebalikan text_to_int: bilangan bulat -> bytes -> teks."""
+    return m.to_bytes((m.bit_length() + 7) // 8, "big").decode("utf-8")
+
+
+def max_plaintext_bytes(n: int) -> int:
+    """Panjang maksimum plaintext (byte) agar selalu m < n."""
+    return (n.bit_length() - 1) // 8
+
+
+def encrypt_text(plaintext: str, e: int, n: int) -> int:
+    """Enkripsi RSA: c = m^e mod n  (pakai PUBLIC key)."""
+    m = text_to_int(plaintext)
+    if m >= n:
+        raise ValueError("Plaintext terlalu panjang untuk satu blok RSA (m >= n)")
+    return mod_pow(m, e, n)
+
+
+def decrypt_text(cipher: int, d: int, n: int) -> str:
+    """Dekripsi RSA: m = c^d mod n  (pakai PRIVATE key), lalu kembalikan ke teks."""
+    return int_to_text(mod_pow(cipher, d, n))

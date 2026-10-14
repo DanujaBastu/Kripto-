@@ -61,7 +61,7 @@ def save_tickets():
         json.dump(tickets, f)
 
 
-# { "7K3M9QXA": {"payload": "...", "sig": "hex...", "used": False} }
+# { "7K3M9QXA": {"cipher": "hex...", "sig": "hex...", "used": False} }
 tickets = load_tickets()
 
 
@@ -83,27 +83,56 @@ N, E, D = load_keys()
 # ---------- Buat & cek tiket ----------
 def create_ticket(nama, event, kategori):
     tid = "".join(secrets.choice(ALPHABET) for _ in range(8))
+    # "|" adalah pemisah field, jadi dibuang dari input agar payload tidak rusak
+    nama, event, kategori = (x.replace("|", " ").strip() for x in (nama, event, kategori))
+    # RSA 1 blok: payload harus lebih kecil dari n, jadi nama dipotong bila terlalu panjang
+    batas = rsa.max_plaintext_bytes(N)
+    while len(f"{tid}|{nama}|{event}|{kategori}".encode("utf-8")) > batas and nama:
+        nama = nama[:-1]
     payload = f"{tid}|{nama}|{event}|{kategori}"
-    signature = rsa.sign(payload, D, N)  # private key panitia
-    tickets[tid] = {"payload": payload, "sig": hex(signature)[2:], "used": False}
+
+    # 1) ENKRIPSI dengan public key (e, n):  c = m^e mod n
+    cipher = rsa.encrypt_text(payload, E, N)
+    # 2) TANDA TANGAN dengan private key d:  s = hash(payload)^d mod n
+    signature = rsa.sign(payload, D, N)
+
+    # Data tiket TIDAK disimpan sebagai teks biasa, hanya ciphertext + signature
+    tickets[tid] = {"cipher": hex(cipher)[2:], "sig": hex(signature)[2:], "used": False}
     save_tickets()
     return f"TKT-{tid[:4]}-{tid[4:]}"  # kode pendek untuk user
 
 
 def check_ticket(code):
-    tid = code.upper().replace("TKT", "").replace("-", "").replace(" ", "")
+    code = code.upper().replace(" ", "")
+    if code.startswith("TKT"):  # buang awalan saja; "TKT" di dalam ID harus tetap ada
+        code = code[3:]
+    tid = code.replace("-", "")
     rec = tickets.get(tid)
     if not rec:
         return False, "Tiket tidak ditemukan di database", None
-    payload = rec["payload"]
-    if not rsa.verify(payload, int(rec["sig"], 16), E, N):  # public key
+
+    # 1) DEKRIPSI dengan private key d:  m = c^d mod n  -> kembali jadi teks payload
+    if "cipher" in rec:
+        try:
+            payload = rsa.decrypt_text(int(rec["cipher"], 16), D, N)
+            pid, nama, event, kategori = payload.split("|")
+        except Exception:
+            return False, "Dekripsi RSA gagal (ciphertext rusak atau dimanipulasi)", None
+        if pid != tid:
+            return False, "Dekripsi RSA gagal (ID di dalam tiket tidak cocok)", None
+    else:
+        # kompatibilitas tiket lama yang masih menyimpan payload sebagai teks biasa
+        payload = rec["payload"]
+        _, nama, event, kategori = payload.split("|")
+
+    # 2) VERIFIKASI tanda tangan dengan public key (e, n)
+    if not rsa.verify(payload, int(rec["sig"], 16), E, N):
         return False, "Tanda tangan digital RSA tidak valid (data telah dimanipulasi)", None
     if rec["used"]:
         return False, "Tiket sudah pernah digunakan sebelumnya (Anti-Double Entry)", None
     rec["used"] = True
     save_tickets()
-    _, nama, event, kategori = payload.split("|")
-    return True, "Tiket sah dan terverifikasi oleh Public Key RSA", {"nama": nama, "event": event, "kategori": kategori}
+    return True, "Tiket didekripsi (RSA) dan tanda tangan terverifikasi", {"nama": nama, "event": event, "kategori": kategori}
 
 
 # ---------- Tampilan (Web UI Modern) ----------
@@ -123,7 +152,7 @@ def get_page(body, active_tab="beli"):
   body {{ font-family: 'Inter', sans-serif; }}
   #reader video {{ border-radius: 1rem; object-fit: cover; }}
 </style>
-</head>
+</head> 
 <body class="min-h-screen bg-[linear-gradient(135deg,#dbeafe_0%,#f6f4ff_48%,#ede9fe_100%)] text-slate-900 antialiased">
     <!-- Header / Navbar -->
     <header class="sticky top-0 z-20 border-b border-slate-100/90 bg-white/70 backdrop-blur-xl">
